@@ -11,10 +11,24 @@ const generateTable = (sql) => {
         // Create readable table from database using console.table library
         const table = cTable.getTable(data);
         console.log(table);
+        
+        return prompt();
     })
 };
 
-inquirer.prompt([
+const updateTable = (sql) => {
+    // Database query
+    db.query(sql, (err, data) => {
+        // Error catcher
+        if (err) { return console.log( err.message); }
+
+        console.log('Database successfully updated');
+
+        return prompt();
+    })
+}
+
+const prompt = () => inquirer.prompt([
     {
         name: 'index',
         type: 'list',
@@ -25,7 +39,7 @@ inquirer.prompt([
     let sql = ''
     // View all departments
     if(answers.index === 'view all departments') {
-        sql = `SELECT * FROM department;`;
+        sql = `SELECT * FROM departments;`;
         generateTable(sql);
     } 
     // View all roles
@@ -38,7 +52,21 @@ inquirer.prompt([
         sql = `SELECT * FROM employees;`;
         generateTable(sql);
     }
+    else if (answers.index === 'add a department') {
+        inquirer.prompt({
+            type:'input',
+            name: 'addDepartment',
+            message: 'Enter new department name'
+        }).then(answers => {
+            console.log(answers.addDepartment);
+            sql = `INSERT INTO departments (name) VALUES ("${answers.addDepartment}");`;
+            updateTable(sql);
+        })
+        
+    }
 });
+
+prompt();
 
 // 1. (done)
 // WHEN I choose to view all departments
