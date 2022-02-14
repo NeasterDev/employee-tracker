@@ -165,8 +165,6 @@ const prompt = () => {
                 let roleID;
 
                 db.query(`SELECT * FROM roles WHERE title='${answers.role}';`, (err, data) => {
-                    console.log(data);
-                    console.log(data[0].id);
                     roleID = data[0].id;
                     console.log(roleID);
                     sql = `UPDATE employees SET role_id = "${roleID}" WHERE id = ${answers.employee}`;
