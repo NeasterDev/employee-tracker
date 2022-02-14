@@ -61,6 +61,23 @@ const prompt = () => inquirer.prompt([
     else if (answers.index === 'add an employee') {
         addToTable("employees");
     }
+    else if (answers.index === 'update an employee role') {
+        inquirer.prompt([
+            {
+                type: 'input',
+                name: 'employee',
+                message: 'Enter ID for employee you wish to update:'
+            },
+            {
+                type: 'input',
+                name: 'role',
+                message: 'Enter new role ID:'
+            }
+        ]).then(answers => {
+            sql = `UPDATE employees SET role_id = "${answers.role}" WHERE id = ${answers.employee}`;
+            updateTable(sql);
+        })
+    }
     else if (answers.index === 'finish') {
         process.exit();
     }
@@ -167,6 +184,6 @@ prompt();
 // WHEN I choose to add an employee
 // THEN I am prompted to enter the employee’s first name, last name, role, and manager, and that employee is added to the database
 
-// 7.
+// 7.(done)
 // WHEN I choose to update an employee role
 // THEN I am prompted to select an employee to update and their new role and this information is updated in the database
