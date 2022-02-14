@@ -2,6 +2,7 @@ const inquirer = require('inquirer');
 const db = require('./db/connection');
 const cTable = require('console.table');
 
+var roleList = [];
 const generateTable = (sql) => {
     // Database query
     db.query(sql, (err, data) => {
@@ -20,7 +21,10 @@ const updateTable = (sql) => {
     // Database query
     db.query(sql, (err, data) => {
         // Error catcher
-        if (err) { return console.log( err.message); }
+        if (err) { 
+            console.log( err.message);
+            return prompt();
+        }
         else {
             console.log('Database successfully updated');
         }
@@ -28,60 +32,13 @@ const updateTable = (sql) => {
     })
 }
 
-const prompt = () => inquirer.prompt([
-    {
-        name: 'index',
-        type: 'list',
-        message: 'What would you like to do?',
-        choices: ['view all departments', 'view all roles', 'view all employees', 'add a department', 'add a role', 'add an employee', 'update an employee role', 'finish']
-    }
-]).then(answers => {
-    let sql = ''
-    // View all departments
-    if(answers.index === 'view all departments') {
-        sql = `SELECT * FROM departments;`;
-        generateTable(sql);
-    } 
-    // View all roles
-    else if (answers.index === 'view all roles') {
-        sql = `SELECT * FROM roles;`;
-        generateTable(sql);
-    } 
-    // View all employees
-    else if (answers.index === 'view all employees') {
-        sql = `SELECT * FROM employees;`;
-        generateTable(sql);
-    }
-    else if (answers.index === 'add a department') {
-        addToTable("departments");
-    }
-    else if (answers.index === 'add a role') {
-        addToTable("roles");
-    }
-    else if (answers.index === 'add an employee') {
-        addToTable("employees");
-    }
-    else if (answers.index === 'update an employee role') {
-        inquirer.prompt([
-            {
-                type: 'input',
-                name: 'employee',
-                message: 'Enter ID for employee you wish to update:'
-            },
-            {
-                type: 'input',
-                name: 'role',
-                message: 'Enter new role ID:'
-            }
-        ]).then(answers => {
-            sql = `UPDATE employees SET role_id = "${answers.role}" WHERE id = ${answers.employee}`;
-            updateTable(sql);
-        })
-    }
-    else if (answers.index === 'finish') {
-        process.exit();
-    }
-});
+const updateRoleList = () => {
+    db.query('SELECT * FROM roles', (err, data) => {
+        for (let i = 0; i < data.length; i++) {
+            roleList[i] = data[i].title;
+        }
+    });
+}
 
 const addToTable = (table) => {
     let question;
@@ -139,7 +96,6 @@ const addToTable = (table) => {
         sql = ``;
     }
     inquirer.prompt(question).then(answers => {
-        //console.log(answers.addDepartment);
         if      (table === 'departments')    { sql = `INSERT INTO departments (name) VALUES ("${answers.departmentName}");` }
         else if (table === 'roles')          { sql = `INSERT INTO roles (title, salary, department_id)
                                                       VALUES ("${answers.roleName}","${answers.salary}","${answers.departmentID}")`; }
@@ -155,6 +111,73 @@ const addToTable = (table) => {
         }
         updateTable(sql);
     })
+}
+
+const prompt = () => {
+        updateRoleList();
+        inquirer.prompt([
+        {
+            name: 'index',
+            type: 'list',
+            message: 'What would you like to do?',
+            choices: ['view all departments', 'view all roles', 'view all employees', 'add a department', 'add a role', 'add an employee', 'update an employee role', 'finish']
+        }
+    ]).then(answers => {
+        let sql = ''
+        // View all departments
+        if(answers.index === 'view all departments') {
+            sql = `SELECT * FROM departments;`;
+            generateTable(sql);
+        } 
+        // View all roles
+        else if (answers.index === 'view all roles') {
+            sql = `SELECT * FROM roles;`;
+            generateTable(sql);
+        } 
+        // View all employees
+        else if (answers.index === 'view all employees') {
+            sql = `SELECT * FROM employees;`;
+            generateTable(sql);
+        }
+        else if (answers.index === 'add a department') {
+            addToTable("departments");
+        }
+        else if (answers.index === 'add a role') {
+            addToTable("roles");
+        }
+        else if (answers.index === 'add an employee') {
+            addToTable("employees");
+        }
+        else if (answers.index === 'update an employee role') {
+
+            inquirer.prompt([
+                {
+                    type: 'input',
+                    name: 'employee',
+                    message: 'Enter ID for employee you wish to update:'
+                },
+                {
+                    type: 'list',
+                    name: 'role',
+                    choices: roleList
+                }
+            ]).then(answers => {
+                let roleID;
+
+                db.query(`SELECT * FROM roles WHERE title='${answers.role}';`, (err, data) => {
+                    console.log(data);
+                    console.log(data[0].id);
+                    roleID = data[0].id;
+                    console.log(roleID);
+                    sql = `UPDATE employees SET role_id = "${roleID}" WHERE id = ${answers.employee}`;
+                    updateTable(sql);
+                });
+            })
+        }
+        else if (answers.index === 'finish') {
+            process.exit();
+        }
+    });
 }
 
 prompt();
