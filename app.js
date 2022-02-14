@@ -33,7 +33,7 @@ const prompt = () => inquirer.prompt([
         name: 'index',
         type: 'list',
         message: 'What would you like to do?',
-        choices: ['view all departments', 'view all roles', 'view all employees', 'add a department', 'add a role', 'add an employee', 'update an employee role']
+        choices: ['view all departments', 'view all roles', 'view all employees', 'add a department', 'add a role', 'add an employee', 'update an employee role', 'finish']
     }
 ]).then(answers => {
     let sql = ''
@@ -60,6 +60,9 @@ const prompt = () => inquirer.prompt([
     }
     else if (answers.index === 'add an employee') {
         addToTable("employees");
+    }
+    else if (answers.index === 'finish') {
+        process.exit();
     }
 });
 
@@ -113,18 +116,26 @@ const addToTable = (table) => {
             {
                 type:'input',
                 name: 'managerID',
-                message: 'Enter manager id for employee:'
+                message: 'Enter manager id for employee("Enter" for no manager):'
             }
         ];
         sql = ``;
     }
     inquirer.prompt(question).then(answers => {
         //console.log(answers.addDepartment);
-        if (table === 'departments') { sql = `INSERT INTO departments (name) VALUES ("${answers.departmentName}");` }
-        else if (table === 'roles') { sql = `INSERT INTO roles (title, salary, department_id)
-                                             VALUES ("${answers.roleName}","${answers.salary}","${answers.departmentID}")`; }
-        else if (table === 'employees') { sql = `INSERT INTO employees (first_name, last_name, role_id, manager_id)
-                                                 VALUES ("${answers.first_name}", "${answers.last_name}", "${answers.roleID}", "${answers.managerID}")`; }
+        if      (table === 'departments')    { sql = `INSERT INTO departments (name) VALUES ("${answers.departmentName}");` }
+        else if (table === 'roles')          { sql = `INSERT INTO roles (title, salary, department_id)
+                                                      VALUES ("${answers.roleName}","${answers.salary}","${answers.departmentID}")`; }
+        else if (table === 'employees')      { 
+            if (answers.managerID === '') {
+                sql = `INSERT INTO employees (first_name, last_name, role_id)
+                       VALUES ("${answers.first_name}", "${answers.last_name}", "${answers.roleID}")`; 
+            } else {
+                sql = `INSERT INTO employees (first_name, last_name, role_id, manager_id)                             
+                       VALUES ("${answers.first_name}", "${answers.last_name}", "${answers.roleID}", "${answers.managerID}")`; 
+            }
+            
+        }
         updateTable(sql);
     })
 }
